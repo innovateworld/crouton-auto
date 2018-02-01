@@ -119,7 +119,8 @@ cPreRequisites() {
 
 cRepositories() {
     title "Setting up required Ubuntu 16.04 repositories"
-    sudo add-apt-repository -y ppa:numix/ppa
+    sudo add-apt-repository -y ppa:tista/adapta
+    sudo add-apt-repository -y ppa:papirus/papirus
     sudo add-apt-repository -y ppa:gnome3-team/gnome3-staging
     sudo add-apt-repository -y ppa:gnome3-team/gnome3
     sudo add-apt-repository -y ppa:webupd8team/atom
@@ -132,7 +133,10 @@ cRepositories() {
     curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
     sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
     sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-
+              
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    sudo echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    
     curl -fsSL "https://download.docker.com/linux/ubuntu/gpg" | sudo apt-key add -
     sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
@@ -143,10 +147,10 @@ cRepositories() {
 cUi() {
     title "Preparing the Gnome interface / applications"
     sudo apt dist-upgrade -y
-    sudo apt install -y numix-icon-theme-circle whoopsie language-pack-en-base nano mlocate htop preload inxi filezilla vlc bleachbit putty vim fish kiki atom xarchiver p7zip p7zip-rar
+    sudo apt install -y papirus-icon-theme whoopsie language-pack-en-base nano mlocate htop preload inxi filezilla vlc bleachbit vim fish kiki atom xarchiver p7zip p7zip-rar
     sudo apt install -y gnome-tweak-tool gnome-terminal gnome-control-center gnome-online-accounts gnome-software gnome-software-common
     sudo apt install -y gnome-shell chrome-gnome-shell
-    sudo apt install -y gnome-shell-extensions gnome-shell-extension-dashtodock gnome-shell-pomodoro gnome-shell-extension-taskbar gnome-shell-extensions-gpaste
+    sudo apt install -y gnome-shell-extensions gnome-shell-pomodoro
 
     cd /tmp
     wget "http://launchpadlibrarian.net/228111194/gnome-disk-utility_3.18.3.1-1ubuntu1_amd64.deb" -O gnome-disk.deb
@@ -174,72 +178,16 @@ cUi() {
     breakLine
 }
 
-cPhp() {
-    title "PHP v7.0"
-    if [ "$(askUser "Install PHP v7.0")" -eq 1 ]; then
-        sudo apt install -y php7.0 php7.0-fpm php7.0-cli php7.0-common php7.0-mbstring php7.0-gd php7.0-intl php7.0-xml php7.0-mysql php7.0-mcrypt php7.0-zip php7.0-dev php-pear
-
-        breakLine
-        title "Composer"
-        if [ "$(askUser "Install Composer package manager for PHP")" -eq 1 ]; then
-            sudo curl -sS "https://getcomposer.org/installer" | sudo php -- --install-dir=/usr/local/bin --filename=composer
-        fi
-
-        breakLine
-        title "Swoole"
-        if [ "$(askUser "Install Swoole asynchronous PHP framework")" -eq 1 ]; then
-            sudo pecl install -y swoole
-        fi
-    fi
-    breakLine
-}
-
 cNodeJs() {
     title "NodeJS"
-    if [ "$(askUser "Install NodeJS v6.0 environment")" -eq 1 ]; then
-        curl -sL "https://deb.nodesource.com/setup_6.x" | sudo -E bash -
+    if [ "$(askUser "Install NodeJS v8.0 environment")" -eq 1 ]; then
+        curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
         sudo apt install -y build-essential nodejs
 
         breakLine
-        title "Bower"
-        if [ "$(askUser "Install Bower package manager")" -eq 1 ]; then
-            sudo npm install -y bower -g
-        fi
-
-        breakLine
-        title "Gulp"
-        if [ "$(askUser "Install Gulp pre-compiler")" -eq 1 ]; then
-            sudo npm install -y gulp -g
-        fi
-
-        breakLine
-        title "Nodemon"
-        if [ "$(askUser "Install Nodemon deamon")" -eq 1 ]; then
-            sudo npm install -y nodemon -g
-        fi
-
-        breakLine
-        title "Browserify"
-        if [ "$(askUser "Install Browserify")" -eq 1 ]; then
-            sudo npm install -y browserify -g
-        fi
-
-        breakLine
-        title "MeteorJS Library"
-        if [ "$(askUser "Install the MeteorJS SDK")" -eq 1 ]; then
-            sudo curl "https://install.meteor.com/" | sh
-        fi
-
-        breakLine
-        title "Vue Library"
-        if [ "$(askUser "Install Vue CLI SDK")" -eq 1 ]; then
-            sudo npm install -y vue-cli -g
-        fi
-
-        breakLine
-        title "React Library"
-        if [ "$(askUser "Install the React/React Native SDKs")" -eq 1 ]; then
-            sudo npm install -y create-react-app create-react-native-app -g
+        title "Yarn"
+        if [ "$(askUser "Install Yarn package manager")" -eq 1 ]; then
+            sudo apt install -y yarn
         fi
 
         breakLine
@@ -327,43 +275,6 @@ cVsCodeIde() {
     breakLine
 }
 
-cPhpStormIde() {
-    title "PHP Storm (30 Day Trial) IDE"
-    if [ "$(askUser "Install PHP Storm (30 Day Trial) IDE")" -eq 1 ]; then
-        cd /tmp
-        wget "https://download.jetbrains.com/webide/PhpStorm-2017.2.4.tar.gz" -O phpstorm.tar.gz
-        sudo tar xf phpstorm.tar.gz
-
-        if [ -d ${PHPSTORM_PATH} ]; then
-            sudo rm -rf ${PHPSTORM_PATH}
-        fi
-
-        sudo mkdir ${PHPSTORM_PATH}
-        sudo mv PhpStorm-*/* ${PHPSTORM_PATH}
-        sudo rm -rf PhpStorm-*/
-        sudo rm phpstorm.tar.gz
-
-        local PHPSTORM_LAUNCHER_PATH=/usr/share/applications/phpstorm.desktop
-
-        if [ ! -f ${PHPSTORM_LAUNCHER_PATH} ]; then
-            sudo touch ${PHPSTORM_LAUNCHER_PATH}
-        fi
-
-        sudo truncate --size 0 ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "[Desktop Entry]" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Version=1.0" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Type=Application" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Name=PhpStorm" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Icon=phpstorm" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Exec=/usr/local/bin/phpstorm/bin/phpstorm.sh" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "StartupWMClass=jetbrains-phpstorm" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Comment=The Drive to Develop" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Categories=Development;IDE;" >> ${PHPSTORM_LAUNCHER_PATH}
-        sudo echo "Terminal=false" >> ${PHPSTORM_LAUNCHER_PATH}
-    fi
-    breakLine
-}
-
 cPyCharmIde() {
     title "PyCharm Community Edition IDE"
     if [ "$(askUser "Install PyCharm Community Edition IDE")" -eq 1 ]; then
@@ -401,97 +312,29 @@ cPyCharmIde() {
     breakLine
 }
 
-cBracketsIde() {
-    title "Brackets IDE"
-    if [ "$(askUser "Install Adobe Brackets IDE")" -eq 1 ]; then
-        cd /tmp
-        sudo apt install -y libpangox-1.0-0 libpango1.0-0
-
-        if [ -d /opt/brackets/ ]; then
-            sudo rm -rf /opt/brackets/
-        fi
-        wget "https://github.com/adobe/brackets/releases/download/release-1.11/Brackets.Release.1.11.64-bit.deb" -O brackets.deb
-        sudo dpkg -i brackets.deb
-        sudo rm brackets.deb
-    fi
-    breakLine
-}
-
-
-cSlack() {
-    title "Slack"
-    if [ "$(askUser "Install Slack chat")" -eq 1 ]; then
-        sudo apt install -y slack-desktop gvfs-bin gir1.2-gnomekeyring-1.0
-        local SLACK_LAUNCHER_PATH=/usr/share/applications/slack.desktop
-
-        if [ ! -f ${SLACK_LAUNCHER_PATH} ]; then
-            sudo touch ${SLACK_LAUNCHER_PATH}
+cFranz() {
+    title "Franz"
+    if [ "$(askUser "Install Franz Chat")" -eq 1 ]; then
+        sudo mkdir -p /opt/franz
+        wget -qO- https://github.com/meetfranz/franz-app/releases/download/4.0.4/Franz-linux-x64-4.0.4.tgz | sudo tar xvz -C /opt/franz/
+        sudo wget "https://cdn-images-1.medium.com/max/360/1*v86tTomtFZIdqzMNpvwIZw.png" -O /opt/franz/franz-icon.png
+        local FRANZ_LAUNCHER_PATH=/usr/share/applications/franz.desktop
+        
+        if [ ! -f ${FRANZ_LAUNCHER_PATH} ]; then
+            sudo touch ${FRANZ_LAUNCHER_PATH}
         fi
 
-        sudo truncate --size 0 ${SLACK_LAUNCHER_PATH}
-        sudo echo "[Desktop Entry]" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Name=Slack" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Comment=Slack Desktop" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "GenericName=Slack Client for Linux" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Exec=/usr/bin/slack --disable-gpu %U" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Icon=slack" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Type=Application" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "StartupNotify=true" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "Categories=GNOME;GTK;Network;InstantMessaging;" >> ${SLACK_LAUNCHER_PATH}
-        sudo echo "MimeType=x-scheme-handler/slack;" >> ${SLACK_LAUNCHER_PATH}
-    fi
-    breakLine
-}
-
-cFacebookMessenger() {
-    title "Facebook Messenger"
-    if [ "$(askUser "Install Facebook Messenger")" -eq 1 ]; then
-        cd /tmp
-        wget "https://updates.messengerfordesktop.com/download/linux/latest/beta?arch=amd64&pkg=deb" -O messenger.deb
-        sudo dpkg -i messenger.deb
-        sudo rm messenger.deb
-    fi
-    breakLine
-}
-
-cSkype () {
-    title "Skype Messenger"
-    if [ "$(askUser "Install Skype Messenger")" -eq 1 ]; then
-        cd /tmp
-        wget "https://go.skype.com/skypeforlinux-64.deb" -O skypeforlinux.deb
-        sudo dpkg -i skypeforlinux.deb
-        sudo rm skypeforlinux.deb
-    fi
-    breakLine
-}
-
-cPopcornTime() {
-    title "Popcorn Time (because why not? :p)"
-    if [ "$(askUser "Install Popcorn Time (you deserve it)")" -eq 1 ]; then
-        if [ -d /opt/popcorn-time ]; then
-            sudo rm -rf /opt/popcorn-time/
-        fi
-
-        sudo mkdir /opt/popcorn-time
-        sudo wget -qO- "https://get.popcorntime.sh/build/Popcorn-Time-0.3.10-Linux-64.tar.xz" | sudo tar Jx -C /opt/popcorn-time
-        sudo ln -sf /opt/popcorn-time/Popcorn-Time /usr/bin/popcorn-time
-
-        local POPCORN_TIME_LAUNCHER_PATH=/usr/share/applications/popcorntime.desktop
-
-        if [ ! -f ${POPCORN_TIME_LAUNCHER_PATH} ]; then
-            sudo touch ${POPCORN_TIME_LAUNCHER_PATH}
-        fi
-
-        sudo truncate --size 0 ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "[Desktop Entry]" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Version=1.0" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Terminal=false" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Type=Application" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Name=Popcorn Time" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Icon=popcorntime" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Exec=/opt/popcorn-time/Popcorn-Time" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "StartupWMClass=Chromium-browser" >> ${POPCORN_TIME_LAUNCHER_PATH}
-        sudo echo "Categories=Application;" >> ${POPCORN_TIME_LAUNCHER_PATH}
+        sudo truncate --size 0 ${FRANZ_LAUNCHER_PATH}
+        sudo echo "[Desktop Entry]" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Name=Franz" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Comment=Franz" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "GenericName=Franz Client for Linux" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Exec=/usr/bin/franz --disable-gpu %U" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Icon=franz" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Type=Application" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "StartupNotify=true" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "Categories=GNOME;GTK;Network;InstantMessaging;" >> ${FRANZ_LAUNCHER_PATH}
+        sudo echo "MimeType=x-scheme-handler/franz;" >> ${FRANZ_LAUNCHER_PATH}
     fi
     breakLine
 }
@@ -535,12 +378,8 @@ configure() {
     cMySqlWorkbench
     cMongoDb
     cVsCodeIde
-    cPhpStormIde
     cPyCharmIde
-    cBracketsIde
-    cSlack
-    cFacebookMessenger
-    cPopcornTime
+    cFranz
     cLocalesPlusKeymap
     cClean
     exit
