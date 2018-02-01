@@ -128,10 +128,7 @@ cRepositories() {
     sudo apt install -y curl apt-transport-https ca-certificates
     
     sudo add-apt-repository -y ppa:shutter/ppa
-    sudo add-apt-repository ppa:peterlevi/ppa
-
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
-    sudo echo "deb [arch=amd64,arm64] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+    sudo add-apt-repository -y ppa:peterlevi/ppa
 
     curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
     sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
@@ -140,9 +137,6 @@ cRepositories() {
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
     sudo echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
     
-    curl -fsSL "https://download.docker.com/linux/ubuntu/gpg" | sudo apt-key add -
-    sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-
     sudo apt update -y
     breakLine
 }
@@ -203,6 +197,10 @@ cSoftware() {
     
     title "Installing Ionic"
     sudo yarn global add ionic@latest
+    breakLine
+    
+    title "Installing Firebase Tools"
+    sudo yarn global add firebase-tools
     breakLine
     
     title "Installing Visual Studio Code"
