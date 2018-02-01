@@ -7,7 +7,7 @@ SELF_NAME=`basename $0`
 SELF_PATH=`dirname $0`/${SELF_NAME}
 CROUTON_PATH=`dirname $0`/crouton
 PYCHARM_PATH=/usr/local/bin/pycharm
-PHPSTORM_PATH=/usr/local/bin/phpstorm
+
 INODE_NUM=`ls -id / | awk '{print $1}'`
 ROBO_MONGO_PATH=/usr/local/bin/robomongo
 BOOTSTRAP_PATH=`dirname $0`/xenial.tar.bz2
@@ -126,6 +126,9 @@ cRepositories() {
     sudo add-apt-repository -y ppa:webupd8team/atom
 
     sudo apt install -y curl apt-transport-https ca-certificates
+    
+    sudo add-apt-repository -y ppa:shutter/ppa
+    sudo add-apt-repository ppa:peterlevi/ppa
 
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
     sudo echo "deb [arch=amd64,arm64] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
@@ -147,169 +150,76 @@ cRepositories() {
 cUi() {
     title "Preparing the Gnome interface / applications"
     sudo apt dist-upgrade -y
-    sudo apt install -y papirus-icon-theme whoopsie language-pack-en-base nano mlocate htop preload inxi filezilla vlc bleachbit vim fish kiki atom xarchiver p7zip p7zip-rar
+    sudo apt install -y papirus-icon-theme whoopsie language-pack-en-base mlocate htop preload inxi
     sudo apt install -y gnome-tweak-tool gnome-terminal gnome-control-center gnome-online-accounts gnome-software gnome-software-common
     sudo apt install -y gnome-shell chrome-gnome-shell
     sudo apt install -y gnome-shell-extensions gnome-shell-pomodoro
+}
 
-    cd /tmp
-    wget "http://launchpadlibrarian.net/228111194/gnome-disk-utility_3.18.3.1-1ubuntu1_amd64.deb" -O gnome-disk.deb
-    sudo dpkg -i gnome-disk.deb
-    sudo rm gnome-disk.deb
+cSoftware() {
+    breakLine
 
-    cd /tmp
-    wget "https://builds.insomnia.rest/downloads/ubuntu/latest" -O insomnia.deb
-    sudo dpkg -i insomnia.deb
-    sudo rm insomnia.deb
-
+    title "Installing Basic Software"
+    sudo apt install -y filezilla vlc bleachbit nano vim fish xarchiver p7zip p7zip-rar variety shutter
     cd /tmp
     wget "https://github.com/oguzhaninan/Stacer/releases/download/v1.0.8/Stacer_1.0.8_amd64.deb" -O stacer.deb
     sudo dpkg -i stacer.deb
     sudo rm stacer.deb
-
-    if [ -f /usr/share/applications/kiki.desktop ]; then
-        sudo sed -i "s/Icon=.*/Icon=regexxer/g" /usr/share/applications/kiki.desktop
-    fi
-
+    cd /tmp
+    wget "http://launchpadlibrarian.net/228111194/gnome-disk-utility_3.18.3.1-1ubuntu1_amd64.deb" -O gnome-disk.deb
+    sudo dpkg -i gnome-disk.deb
+    sudo rm gnome-disk.deb
     breakLine
-
+    
     title "Installing ClamAV"
     sudo apt install -y clamav clamav-daemon clamav-freshclam clamtk
     breakLine
-}
-
-cNodeJs() {
-    title "NodeJS"
-    if [ "$(askUser "Install NodeJS v8.0 environment")" -eq 1 ]; then
-        curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
-        sudo apt install -y build-essential nodejs
-
-        breakLine
-        title "Yarn"
-        if [ "$(askUser "Install Yarn package manager")" -eq 1 ]; then
-            sudo apt install -y yarn
-        fi
-
-        breakLine
-        title "AngularJS Framework"
-        if [ "$(askUser "Install the Angular CLI, Service Worker & PWA tools framework")" -eq 1 ]; then
-            sudo npm install -y @angular/cli @angular/service-worker ng-pwa-tools -g
-        fi
-    fi
+    
+    title "Installing GIT"
+    sudo apt install -y git
     breakLine
-}
-
-cGit() {
-    title "Git"
-    if [ "$(askUser "Install Git version control system")" -eq 1 ]; then
-        sudo apt install -y git
-    fi
+    
+    title "Installing NodeJS"
+    curl -sL "https://deb.nodesource.com/setup_8.x" | sudo -E bash -
+    sudo apt install -y build-essential nodejs
     breakLine
-}
-
-cDocker() {
-    title "Docker"
-    if [ "$(askUser "Install Docker visualization environment")" -eq 1 ]; then
-        sudo apt install -y docker-ce
-    fi
+    
+    title "Installing N"
+    sudo npm install -g n
     breakLine
-}
-
-cMySqlWorkbench() {
-    title "MySQL Workbench"
-    if [ "$(askUser "Install MySQL Workbench database manager")" -eq 1 ]; then
-        sudo apt install -y mysql-workbench
-    fi
+    
+    title "Installing Yarn"
+    sudo apt install -y yarn
     breakLine
-}
-
-cMongoDb() {
-    title "MongoDB"
-    if [ "$(askUser "Install MongoDB server")" -eq 1 ]; then
-        sudo apt install -y mongodb-org
-
-        breakLine
-        title "RoboMongo (Robo3T)"
-        if [ "$(askUser "Install RoboMongo database manager")" -eq 1 ]; then
-            sudo apt install -y xcb
-            cd /tmp
-            wget "https://download.robomongo.org/1.1.1/linux/robo3t-1.1.1-linux-x86_64-c93c6b0.tar.gz" -O robomongo.tar.gz
-
-            if [ -d ${ROBO_MONGO_PATH} ]; then
-                sudo rm -rf ${ROBO_MONGO_PATH}
-            fi
-
-            sudo mkdir ${ROBO_MONGO_PATH}
-            sudo tar xf robomongo.tar.gz
-            sudo rm robomongo.tar.gz
-            sudo mv robo3t-*/* ${ROBO_MONGO_PATH}
-            sudo rm -rf robo3t-*/
-            sudo rm ${ROBO_MONGO_PATH}/lib/libstdc++*
-            sudo chmod +x ${ROBO_MONGO_PATH}/bin/robo3t
-
-            local ROBO_MONGO_LAUNCHER_PATH=/usr/share/applications/robomongo.desktop
-
-            if [ ! -f ${ROBO_MONGO_LAUNCHER_PATH} ]; then
-                sudo touch ${ROBO_MONGO_LAUNCHER_PATH}
-            fi
-
-            sudo truncate --size 0 ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "[Desktop Entry]" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Name=Robomongo" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Comment=MongoDB Database Administration" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Exec=/usr/local/bin/robomongo/bin/robo3t" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Terminal=false" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Type=Application" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "Icon=robomongo" >> ${ROBO_MONGO_LAUNCHER_PATH}
-            sudo echo "StartupWMClass=robo3t" >> ${ROBO_MONGO_LAUNCHER_PATH}
-        fi
-  fi
-  breakLine
-}
-
-cVsCodeIde() {
-    title "Microsoft Visual Studio Code IDE"
-    if [ "$(askUser "Install Microsoft Visual Studio Code IDE")" -eq 1 ]; then
-        sudo apt install -y code
-    fi
+    
+    title "Installing Angular CLI"
+    sudo yarn global add @angular/cli@latest
+    sudo ng set --global packageManager=yarn
     breakLine
-}
-
-cPyCharmIde() {
-    title "PyCharm Community Edition IDE"
-    if [ "$(askUser "Install PyCharm Community Edition IDE")" -eq 1 ]; then
-        cd /tmp
-        wget "https://download.jetbrains.com/python/pycharm-community-2017.2.3.tar.gz" -O pycharm.tar.gz
-        sudo tar xf pycharm.tar.gz
-
-        if [ -d ${PYCHARM_PATH} ]; then
-            sudo rm -rf ${PYCHARM_PATH}
-        fi
-
-        sudo mkdir ${PYCHARM_PATH}
-        sudo mv pycharm-*/* ${PYCHARM_PATH}
-        sudo rm -rf pycharm-*/
-        sudo rm pycharm.tar.gz
-
-        local PYCHARM_LAUNCHER_PATH=/usr/share/applications/pycharm.desktop
-
-        if [ ! -f ${PYCHARM_LAUNCHER_PATH} ]; then
-            sudo touch ${PYCHARM_LAUNCHER_PATH}
-        fi
-
-        sudo truncate --size 0 ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "[Desktop Entry]" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Version=1.0" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Type=Application" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Name=PyCharm" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Icon=pycharm" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Exec=/usr/local/bin/pycharm/bin/pycharm.sh" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "StartupWMClass=jetbrains-pycharm-ce" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Comment=The Drive to Develop" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Categories=Development;IDE;" >> ${PYCHARM_LAUNCHER_PATH}
-        sudo echo "Terminal=false" >> ${PYCHARM_LAUNCHER_PATH}
-    fi
+    
+    title "Installing Cordova"
+    sudo yarn global add cordova
     breakLine
+    
+    title "Installing Ionic"
+    sudo yarn global add ionic@latest
+    breakLine
+    
+    title "Installing Visual Studio Code"
+    sudo apt install -y code
+    breakLine
+    
+    title "Installing Atom"
+    sudo apt install -y atom
+    breakLine
+    
+    title "Installing Insomnia"
+    cd /tmp
+    wget "https://builds.insomnia.rest/downloads/ubuntu/latest" -O insomnia.deb
+    sudo dpkg -i insomnia.deb
+    sudo rm insomnia.deb
+    breakLine
+
 }
 
 cFranz() {
@@ -329,7 +239,6 @@ cFranz() {
         sudo echo "Name=Franz" >> ${FRANZ_LAUNCHER_PATH}
         sudo echo "Comment=Franz" >> ${FRANZ_LAUNCHER_PATH}
         sudo echo "GenericName=Franz Client for Linux" >> ${FRANZ_LAUNCHER_PATH}
-        sudo echo "Exec=/usr/bin/franz --disable-gpu %U" >> ${FRANZ_LAUNCHER_PATH}
         sudo echo "Icon=franz" >> ${FRANZ_LAUNCHER_PATH}
         sudo echo "Type=Application" >> ${FRANZ_LAUNCHER_PATH}
         sudo echo "StartupNotify=true" >> ${FRANZ_LAUNCHER_PATH}
@@ -371,14 +280,7 @@ configure() {
     fi
 
     # Systems setup
-    cPhp
-    cNodeJs
-    cGit
-    cDocker
-    cMySqlWorkbench
-    cMongoDb
-    cVsCodeIde
-    cPyCharmIde
+    cSoftware   
     cFranz
     cLocalesPlusKeymap
     cClean
